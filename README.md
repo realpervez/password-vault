@@ -134,10 +134,11 @@ src/main/java/com/pervez/password_vault/
 | Feature | Status |
 |---|---|
 | Project setup + DB connection | ✅ Done |
-| User entity + registration | 🔄 In progress |
-| AES-256 encryption service | ⏳ Upcoming |
+| User entity + registration | ✅ Done |
+| AES-256 encryption service | ✅ Done |
+| Password vault CRUD | ✅ Done |
+| REST API endpoints (Auth + Vault) | ✅ Done |
 | JWT authentication | ⏳ Upcoming |
-| Password vault CRUD | ⏳ Upcoming |
 | Frontend UI | ⏳ Upcoming |
 
 ---
