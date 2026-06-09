@@ -31,7 +31,6 @@ public class VaultService {
         entry.setSiteUrl(siteUrl);
         entry.setUsernameForSite(usernameForSite);
         entry.setEncryptedPassword(encrypted);
-        entry.setIv("stored-in-encrypted");
 
         return passwordEntryRepository.save(entry);
     }

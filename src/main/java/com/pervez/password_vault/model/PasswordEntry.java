@@ -55,8 +55,6 @@ public class PasswordEntry {
     public String getEncryptedPassword() { return encryptedPassword; }
     public void setEncryptedPassword(String encryptedPassword) { this.encryptedPassword = encryptedPassword; }
 
-    public String getIv() { return iv; }
-    public void setIv(String iv) { this.iv = iv; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 }
