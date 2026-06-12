@@ -2,10 +2,10 @@ package com.pervez.password_vault.controller;
 
 import com.pervez.password_vault.model.PasswordEntry;
 import com.pervez.password_vault.model.User;
-import com.pervez.password_vault.service.AuthService;
 import com.pervez.password_vault.service.VaultService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,16 +18,14 @@ public class VaultController {
     @Autowired
     private VaultService vaultService;
 
-    @Autowired
-    private AuthService authService;
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
 
     @PostMapping("/add")
     public ResponseEntity<?> addEntry(@RequestBody Map<String, String> request) {
         try {
-            User user = authService.login(
-                    request.get("username"),
-                    request.get("masterPassword")
-            );
+            User user = getCurrentUser();
             PasswordEntry entry = vaultService.addEntry(
                     user,
                     request.get("siteName"),
@@ -43,10 +41,9 @@ public class VaultController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> listEntries(@RequestParam String username,
-                                         @RequestParam String masterPassword) {
+    public ResponseEntity<?> listEntries() {
         try {
-            User user = authService.login(username, masterPassword);
+            User user = getCurrentUser();
             List<PasswordEntry> entries = vaultService.getAllEntries(user);
             return ResponseEntity.ok(entries);
         } catch (Exception e) {
@@ -56,11 +53,10 @@ public class VaultController {
 
     @GetMapping("/decrypt/{id}")
     public ResponseEntity<?> decryptEntry(@PathVariable Long id,
-                                          @RequestParam String username,
-                                          @RequestParam String masterPassword) {
+                                          @RequestBody Map<String, String> request) {
         try {
-            User user = authService.login(username, masterPassword);
-            String plainPassword = vaultService.decryptEntry(user, id, masterPassword);
+            User user = getCurrentUser();
+            String plainPassword = vaultService.decryptEntry(user, id, request.get("masterPassword"));
             return ResponseEntity.ok("Decrypted password: " + plainPassword);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -68,13 +64,9 @@ public class VaultController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteEntry(@PathVariable Long id,
-                                         @RequestBody Map<String, String> request) {
+    public ResponseEntity<?> deleteEntry(@PathVariable Long id) {
         try {
-            User user = authService.login(
-                    request.get("username"),
-                    request.get("masterPassword")
-            );
+            User user = getCurrentUser();
             vaultService.deleteEntry(user, id);
             return ResponseEntity.ok("Entry deleted successfully");
         } catch (Exception e) {
@@ -83,11 +75,9 @@ public class VaultController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchEntries(@RequestParam String username,
-                                           @RequestParam String masterPassword,
-                                           @RequestParam String siteName) {
+    public ResponseEntity<?> searchEntries(@RequestParam String siteName) {
         try {
-            User user = authService.login(username, masterPassword);
+            User user = getCurrentUser();
             List<PasswordEntry> entries = vaultService.searchEntries(user, siteName);
             return ResponseEntity.ok(entries);
         } catch (Exception e) {

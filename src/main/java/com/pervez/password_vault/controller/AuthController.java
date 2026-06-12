@@ -1,6 +1,7 @@
 package com.pervez.password_vault.controller;
 
 import com.pervez.password_vault.model.User;
+import com.pervez.password_vault.security.JwtUtil;
 import com.pervez.password_vault.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
@@ -42,10 +46,12 @@ public class AuthController {
             String masterPassword = request.get("masterPassword");
 
             User user = authService.login(username, masterPassword);
+            String token = jwtUtil.generateToken(username);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Login successful");
             response.put("username", user.getUsername());
+            response.put("token", token);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
