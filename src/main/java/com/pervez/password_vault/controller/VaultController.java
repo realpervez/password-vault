@@ -70,7 +70,7 @@ public class VaultController {
         }
     }
 
-    @GetMapping("/decrypt/{id}")
+    @PostMapping("/decrypt/{id}")
     public ResponseEntity<?> decryptEntry(@PathVariable Long id,
                                           @RequestBody Map<String, String> request) {
         try {

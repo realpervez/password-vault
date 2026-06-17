@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Vault — Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { align-items: flex-start; padding: 40px 20px; }
+        .dashboard { width: 100%; max-width: 700px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .header h1 { font-size: 22px; }
+        .logout { background: transparent; border: 1px solid #333; color: #fff; width: auto; padding: 8px 16px; margin: 0; }
+        .logout:hover { background: #1a1a1a; }
+        .add-form { background: #111; border: 1px solid #222; border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+        .add-form h2 { font-size: 16px; margin-bottom: 16px; color: #888; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .add-form .form-group { margin-bottom: 12px; }
+        .add-btn { background: #fff; color: #000; width: auto; padding: 10px 24px; margin: 0; margin-top: 8px; }
+        .entries { display: flex; flex-direction: column; gap: 12px; }
+        .entry-card { background: #111; border: 1px solid #222; border-radius: 10px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .entry-info h3 { font-size: 15px; margin-bottom: 4px; }
+        .entry-info p { font-size: 13px; color: #666; }
+        .entry-actions { display: flex; gap: 8px; }
+        .btn-small { width: auto; padding: 6px 14px; font-size: 12px; margin: 0; background: #1a1a1a; color: #fff; border: 1px solid #333; }
+        .btn-small:hover { background: #222; }
+        .btn-delete { border-color: #ff4444; color: #ff4444; }
+        .btn-delete:hover { background: #1a0000; }
+        .decrypted { font-size: 12px; color: #44ff88; margin-top: 6px; }
+        .empty { text-align: center; color: #444; padding: 40px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <h1>Your Vault</h1>
+        <button class="logout" onclick="logout()">Sign Out</button>
+    </div>
+
+    <div class="add-form">
+        <h2>Add New Entry</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Site Name</label>
+                <input type="text" id="siteName" placeholder="e.g. Gmail" />
+            </div>
+            <div class="form-group">
+                <label>Site URL</label>
+                <input type="text" id="siteUrl" placeholder="https://gmail.com" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Username / Email</label>
+                <input type="text" id="usernameForSite" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="plainPassword" placeholder="Site password" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Master Password (to encrypt)</label>
+            <input type="password" id="masterPassword" placeholder="Your master password" />
+        </div>
+        <button class="add-btn" onclick="addEntry()">Add Entry</button>
+    </div>
+
+    <div class="entries" id="entries">
+        <div class="empty">Loading your vault...</div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'index.html';
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    };
+
+    async function loadEntries() {
+        const res = await fetch('http://localhost:8080/vault/list', { headers });
+        const data = await res.json();
+        const container = document.getElementById('entries');
+
+        if (!res.ok || data.length === 0) {
+            container.innerHTML = '<div class="empty">No entries yet.</div>';
+            return;
+        }
+
+        container.innerHTML = data.map(entry => `
+                <div class="entry-card" id="entry-${entry.id}">
+                    <div class="entry-info">
+                        <h3>${entry.siteName}</h3>
+                        <p>${entry.usernameForSite} — <a href="${entry.siteUrl}" target="_blank" style="color:#555">${entry.siteUrl}</a></p>
+                        <p class="decrypted" id="decrypted-${entry.id}"></p>
+                    </div>
+                    <div class="entry-actions">
+                        <button class="btn-small" onclick="decrypt(${entry.id})">Reveal</button>
+                        <button class="btn-small btn-delete" onclick="deleteEntry(${entry.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    async function addEntry() {
+        const body = {
+            siteName: document.getElementById('siteName').value,
+            siteUrl: document.getElementById('siteUrl').value,
+            usernameForSite: document.getElementById('usernameForSite').value,
+            plainPassword: document.getElementById('plainPassword').value,
+            masterPassword: document.getElementById('masterPassword').value
+        };
+
+        const res = await fetch('http://localhost:8080/vault/add', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            document.getElementById('siteName').value = '';
+            document.getElementById('siteUrl').value = '';
+            document.getElementById('usernameForSite').value = '';
+            document.getElementById('plainPassword').value = '';
+            document.getElementById('masterPassword').value = '';
+            loadEntries();
+        }
+    }
+
+    async function decrypt(id) {
+        const masterPassword = prompt('Enter master password to reveal:');
+        if (!masterPassword) return;
+
+        const res = await fetch(`http://localhost:8080/vault/decrypt/${id}`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ masterPassword })
+        });
+
+        const text = await res.text();
+        document.getElementById(`decrypted-${id}`).textContent = text;
+    }
+
+    async function deleteEntry(id) {
+        const res = await fetch(`http://localhost:8080/vault/delete/${id}`, {
+            method: 'DELETE',
+            headers
+        });
+        if (res.ok) loadEntries();
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        window.location.href = 'index.html';
+    }
+
+    loadEntries();
+</script>
+</body>
+</html>
