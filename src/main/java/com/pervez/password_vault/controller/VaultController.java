@@ -1,5 +1,6 @@
 package com.pervez.password_vault.controller;
 
+import com.pervez.password_vault.dto.PasswordEntryResponse;
 import com.pervez.password_vault.model.PasswordEntry;
 import com.pervez.password_vault.model.User;
 import com.pervez.password_vault.service.VaultService;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/vault")
@@ -44,7 +46,24 @@ public class VaultController {
     public ResponseEntity<?> listEntries() {
         try {
             User user = getCurrentUser();
-            List<PasswordEntry> entries = vaultService.getAllEntries(user);
+            List<PasswordEntryResponse> entries = vaultService.getAllEntries(user)
+                    .stream()
+                    .map(PasswordEntryResponse::new)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(entries);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchEntries(@RequestParam String siteName) {
+        try {
+            User user = getCurrentUser();
+            List<PasswordEntryResponse> entries = vaultService.searchEntries(user, siteName)
+                    .stream()
+                    .map(PasswordEntryResponse::new)
+                    .collect(Collectors.toList());
             return ResponseEntity.ok(entries);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -69,17 +88,6 @@ public class VaultController {
             User user = getCurrentUser();
             vaultService.deleteEntry(user, id);
             return ResponseEntity.ok("Entry deleted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<?> searchEntries(@RequestParam String siteName) {
-        try {
-            User user = getCurrentUser();
-            List<PasswordEntry> entries = vaultService.searchEntries(user, siteName);
-            return ResponseEntity.ok(entries);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
