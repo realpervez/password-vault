@@ -45,6 +45,7 @@
                 const data = await res.json();
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username);
+                sessionStorage.setItem('masterPassword', masterPassword);
                 window.location.href = 'dashboard.html';
             } else {
                 const errorText = await res.text();
