@@ -41,14 +41,14 @@
                 body: JSON.stringify({ username, masterPassword })
             });
 
-            const data = await res.json();
-
             if (res.ok) {
+                const data = await res.json();
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username);
                 window.location.href = 'dashboard.html';
             } else {
-                document.getElementById('error').textContent = data;
+                const errorText = await res.text();
+                document.getElementById('error').textContent = errorText;
             }
         } catch (err) {
             document.getElementById('error').textContent = 'Could not connect to server.';
