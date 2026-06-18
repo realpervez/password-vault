@@ -148,6 +148,8 @@
     }
 
     async function deleteEntry(id) {
+        if (!confirm('Are you sure you want to delete this entry?')) return;
+
         const res = await fetch(`http://localhost:8080/vault/delete/${id}`, {
             method: 'DELETE',
             headers
