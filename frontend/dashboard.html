@@ -127,6 +127,9 @@
             document.getElementById('plainPassword').value = '';
             document.getElementById('masterPassword').value = '';
             loadEntries();
+        } else {
+            const errorText = await res.text();
+            alert(errorText);
         }
     }
 
@@ -149,7 +152,12 @@
             method: 'DELETE',
             headers
         });
-        if (res.ok) loadEntries();
+        if (res.ok) {
+            loadEntries();
+        } else {
+            const errorText = await res.text();
+            alert(errorText);
+        }
     }
 
     function logout() {

@@ -4,6 +4,7 @@ import com.pervez.password_vault.dto.PasswordEntryResponse;
 import com.pervez.password_vault.model.PasswordEntry;
 import com.pervez.password_vault.model.User;
 import com.pervez.password_vault.service.VaultService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -82,6 +83,7 @@ public class VaultController {
         }
     }
 
+    @Transactional
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEntry(@PathVariable Long id) {
         try {

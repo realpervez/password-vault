@@ -26,9 +26,6 @@ public class PasswordEntry {
     @Column(nullable = false)
     private String encryptedPassword;
 
-    @Column(nullable = false)
-    private String iv;
-
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
